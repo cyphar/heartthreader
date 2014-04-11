@@ -35,6 +35,7 @@ import (
 	"strings"
 	"sync"
 	"fmt"
+	"flag"
 	"time"
 
 	"github.com/titanous/heartbleeder/tls"
@@ -45,7 +46,9 @@ type Server struct {
 	Vulnerable bool
 }
 
-const NumDigesters = 20
+var Config struct {
+	NumThreads int
+}
 
 func FixLine(line string) string {
 	if strings.HasSuffix(line, "\n") {
@@ -144,9 +147,9 @@ func DigestAll(files []string) {
 	hosts := YieldTargets(done, files)
 
 	var wg sync.WaitGroup
-	wg.Add(NumDigesters)
+	wg.Add(Config.NumThreads)
 
-	for i := 0; i < NumDigesters; i++ {
+	for i := 0; i < Config.NumThreads; i++ {
 		go func() {
 			DigestTarget(done, hosts, servers)
 			wg.Done()
@@ -168,10 +171,19 @@ func DigestAll(files []string) {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Printf("Usage: %s hostfile[s]\n", os.Args[0])
+	var (
+		o_threads = flag.Int("threads", 20, "Specify the number of threads to use when scanning the input files.")
+	)
+
+	flag.Parse()
+
+	/* set configs */
+	Config.NumThreads = *o_threads
+
+	if len(flag.Args()) < 1 {
+		fmt.Printf("Usage: %s [opts] hostfile[s]\n", os.Args[0])
 		os.Exit(2)
 	}
 
-	DigestAll(os.Args[1:])
+	DigestAll(flag.Args())
 }
