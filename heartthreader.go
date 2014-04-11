@@ -1,4 +1,4 @@
-/* heartthreader: multithreaded testing of domains against the Heartbleed vuln (CVE-2014-0160)
+/* heartthreader: mass, multithreaded testing for servers against Heartbleed (CVE-2014-0160)
  * Copyright (C) 2014, Cyphar All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
