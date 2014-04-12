@@ -31,6 +31,7 @@ package main
 
 import (
 	"os"
+	"io"
 	"bufio"
 	"strings"
 	"sync"
@@ -45,6 +46,34 @@ type Server struct {
 	Host string
 	Vulnerable bool
 }
+
+const LICENSE = "heartthreader: mass, multithreaded testing for servers against Heartbleed (CVE-2014-0160)\n" +
+	"Copyright (C) 2014, Cyphar All rights reserved.\n" +
+	"\n" +
+	"Redistribution and use in source and binary forms, with or without\n" +
+	"modification, are permitted provided that the following conditions are met:\n" +
+	"\n" +
+	"1. Redistributions of source code must retain the above copyright notice,\n" +
+	"   this list of conditions and the following disclaimer.\n" +
+	"\n" +
+	"2. Redistributions in binary form must reproduce the above copyright notice,\n" +
+	"   this list of conditions and the following disclaimer in the documentation\n" +
+	"   and/or other materials provided with the distribution.\n" +
+	"\n" +
+	"3. Neither the name of the copyright holder nor the names of its contributors\n" +
+	"   may be used to endorse or promote products derived from this software without\n" +
+	"   specific prior written permission.\n" +
+	"\n" +
+	"THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\n" +
+	"AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\n" +
+	"IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\n" +
+	"DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\n" +
+	"FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\n" +
+	"DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\n" +
+	"SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\n" +
+	"CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\n" +
+	"OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE\n" +
+	"USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n"
 
 var Config struct {
 	NumThreads int
@@ -166,18 +195,45 @@ func DigestAll(files []string, out chan<- Server) {
 	}
 }
 
+func License() {
+	fmt.Printf(LICENSE)
+}
+
+func Help(out io.Writer) {
+	fmt.Fprintf(out, "Usage: %s [opts] hostfile[s]\n\n", os.Args[0])
+	fmt.Fprintf(out, "Flags for %s:\n", os.Args[0])
+	flag.PrintDefaults()
+}
+
 func main() {
 	var (
 		o_threads = flag.Int("threads", 20, "Specify the number of threads to use when scanning the input files.")
+
+		o_license = flag.Bool("license", false, "Show the license text.")
+		o_help    = flag.Bool("help", false, "Show this help page.")
 	)
+
+	flag.Usage = func() {
+		Help(os.Stderr)
+	}
 
 	flag.Parse()
 
 	/* set configs */
 	Config.NumThreads = *o_threads
 
+	if *o_license {
+		License()
+		os.Exit(0)
+	}
+
+	if *o_help {
+		Help(os.Stdout)
+		os.Exit(0)
+	}
+
 	if len(flag.Args()) < 1 {
-		fmt.Printf("Usage: %s [opts] hostfile[s]\n", os.Args[0])
+		Help(os.Stderr)
 		os.Exit(2)
 	}
 
