@@ -99,6 +99,7 @@ func YieldTargets(done <-chan struct{}, files []string) <-chan string {
 		defer close(hosts)
 		for _, file := range files {
 			f, err := os.Open(file)
+			defer f.Close()
 
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "E: %s\n", err.Error())
@@ -117,6 +118,8 @@ func YieldTargets(done <-chan struct{}, files []string) <-chan string {
 						return
 				}
 			}
+
+			f.Close()
 		}
 	}()
 
@@ -131,6 +134,7 @@ func DigestTarget(done <-chan struct{}, hosts <-chan string, c chan<- Server) {
 		}
 
 		conn, err := tls.Dial("tcp", host, &tls.Config{InsecureSkipVerify: true})
+		defer conn.Close()
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "E: %s\n", err.Error())
@@ -165,6 +169,8 @@ func DigestTarget(done <-chan struct{}, hosts <-chan string, c chan<- Server) {
 				fmt.Fprintf(os.Stderr, "I: digest of %s canceled\n", host)
 				return
 		}
+
+		conn.Close()
 	}
 }
 
