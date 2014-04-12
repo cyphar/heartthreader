@@ -139,7 +139,7 @@ func DigestTarget(done <-chan struct{}, hosts <-chan string, c chan<- Server) {
 	}
 }
 
-func DigestAll(files []string) {
+func DigestAll(files []string, out chan<- Server) {
 	servers := make(chan Server)
 	done := make(chan struct{})
 	defer close(done)
@@ -162,11 +162,7 @@ func DigestAll(files []string) {
 	}()
 
 	for server := range servers {
-		if server.Vulnerable {
-			fmt.Printf("V: %s\n", server.Host)
-		} else {
-			fmt.Printf("N: %s\n", server.Host)
-		}
+		out <- server
 	}
 }
 
@@ -185,5 +181,14 @@ func main() {
 		os.Exit(2)
 	}
 
-	DigestAll(flag.Args())
+	servers := make(chan Server)
+	go DigestAll(flag.Args(), servers)
+
+	for server := range servers {
+		if server.Vulnerable {
+			fmt.Printf("V: %s\n", server.Host)
+		} else {
+			fmt.Printf("N: %s\n", server.Host)
+		}
+	}
 }
