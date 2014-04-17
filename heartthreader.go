@@ -179,6 +179,8 @@ func DigestTarget(done <-chan struct{}, hosts <-chan string, c chan<- Server) {
 }
 
 func DigestAll(files []string, out chan<- Server) {
+	defer close(out)
+
 	servers := make(chan Server)
 	done := make(chan struct{})
 	defer close(done)
