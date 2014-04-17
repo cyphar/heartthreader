@@ -39,7 +39,7 @@ import (
 	"flag"
 	"time"
 
-	"github.com/titanous/heartbleeder/tls"
+	tls "github.com/titanous/heartbleeder/tls"
 )
 
 type Server struct {
@@ -129,7 +129,11 @@ func YieldTargets(done <-chan struct{}, files []string) <-chan string {
 func DigestTarget(done <-chan struct{}, hosts <-chan string, c chan<- Server) {
 	for host := range hosts {
 		wait_err := func(conn *tls.Conn, ch chan<- error) {
-			_, _, err := conn.Heartbeat(32, nil)
+			var err error
+
+			err = conn.WriteHeartbeat(32, nil)
+			_, _, err = conn.ReadHeartbeat()
+
 			ch <- err
 		}
 
