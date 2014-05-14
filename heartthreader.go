@@ -138,12 +138,11 @@ func DigestTarget(done <-chan struct{}, hosts <-chan string, c chan<- Server) {
 		}
 
 		conn, err := tls.Dial("tcp", host, &tls.Config{InsecureSkipVerify: true})
-		defer conn.Close()
-
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "E: %s\n", err.Error())
 			continue
 		}
+		defer conn.Close()
 
 		quit := time.After(10 * time.Second)
 		ech := make(chan error)
