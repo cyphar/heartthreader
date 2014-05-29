@@ -177,12 +177,9 @@ func DigestTarget(done <-chan struct{}, hosts <-chan string, c chan<- Server) {
 	}
 }
 
-func DigestAll(files []string, out chan<- Server) {
-	defer close(out)
-
+func DigestAll(files []string) <-chan Server {
 	servers := make(chan Server)
-	done := make(chan struct{})
-	defer close(done)
+	done := make(chan struct{}, 1)
 
 	hosts := YieldTargets(done, files)
 
@@ -199,11 +196,10 @@ func DigestAll(files []string, out chan<- Server) {
 	go func() {
 		wg.Wait()
 		close(servers)
+		close(done)
 	}()
 
-	for server := range servers {
-		out <- server
-	}
+	return servers
 }
 
 func License() {
@@ -248,8 +244,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	servers := make(chan Server)
-	go DigestAll(flag.Args(), servers)
+	servers := DigestAll(flag.Args())
 
 	for server := range servers {
 		if server.Vulnerable {
